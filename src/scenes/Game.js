@@ -5,14 +5,16 @@ import campySprite from '../../assets/campy2.png';
 
 let gameOptions = {
 	playerStartPosition: 100,
+	playerStartHeight: 300,
+	platformStartHeight: 360,
 	playerGravity: 900,
 	platformStartSpeed: 200,
 	spawnRange: [50, 100],
 	platformSizeRange: [100, 250],
-	platformHeightRange: [ 600, 620],
+	platformHeightRange: [-50, 50],
 	jumpForce: 400,
 	jumps: 2,
-	platformHeightScale: 10,
+	platformHeightScale: 2,
 	platformVerticalLimit: [.1, .9]
 }
 
@@ -45,11 +47,11 @@ export default class Game extends Phaser.Scene {
 		})
 
 		// add a platform
-		this.addPlatform(this.config.width, this.config.width / 2, 600);
+		this.addPlatform(this.config.width, this.config.width / 2, gameOptions.platformStartHeight);
 
 		// add a player
 		this.playerJumps = 0;
-		this.player = this.physics.add.sprite(gameOptions.playerStartPosition, 400, 'campy');
+		this.player = this.physics.add.sprite(gameOptions.playerStartPosition, gameOptions.playerStartHeight, 'campy');
 		this.player.setGravityY(gameOptions.playerGravity);
 
 		// add controls
@@ -89,11 +91,14 @@ export default class Game extends Phaser.Scene {
 		if (minDistance > this.nextPlatformDistance) {
 			let nextPlatformWidth = Phaser.Math.Between(gameOptions.platformSizeRange[0], gameOptions.platformSizeRange[1]);
 			let platformRandomHeight = gameOptions.platformHeightScale * Phaser.Math.Between(gameOptions.platformHeightRange[0], gameOptions.platformHeightRange[1]);
-			console.log(rightmostPlatformHeight)
+
+			console.log(rightmostPlatformHeight, platformRandomHeight);
 
 			let nextPlatformGap = rightmostPlatformHeight + platformRandomHeight;
+			console.log(nextPlatformGap);
 			let minPlatformHeight = this.config.height * gameOptions.platformVerticalLimit[0];
 			let maxPlatformHeight = this.config.height * gameOptions.platformVerticalLimit[1];
+
 			let nextPlatformHeight = Phaser.Math.Clamp(nextPlatformGap, minPlatformHeight, maxPlatformHeight);
 
 			this.addPlatform(nextPlatformWidth, this.config.width + nextPlatformWidth / 2, nextPlatformHeight);
@@ -102,7 +107,7 @@ export default class Game extends Phaser.Scene {
 
 	// the core of the script: platform are added from the pool or created on the fly
 	addPlatform(platformWidth, posX, posY) {
-		console.log(platformWidth, posX, posY);
+		// console.log(platformWidth, posX, posY);
 		let platform;
 		if (this.platformPool.getLength()) {
 			platform = this.platformPool.getFirst();
