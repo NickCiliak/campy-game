@@ -125,24 +125,37 @@ export default class Game extends Phaser.Scene {
 	addPlatform(platformWidth, posX, posY) {
 		// console.log(platformWidth, posX, posY);
 		let platform;
-		if (this.platformPool.getLength()) {
-			platform = this.platformPool.getFirst();
-			platform.x = posX;
-			platform.active = true;
-			platform.visible = true;
-			this.platformPool.remove(platform);
-		}
-		else {
+
+		/**
+		 * commenting out the object pooling for now
+		 */
+
+		// if (this.platformPool.getLength()) {
+		// 	platform = this.platformPool.getFirst();
+		// 	platform.x = posX;
+		// 	platform.active = true;
+		// 	platform.visible = true;
+		// 	this.platformPool.remove(platform);
+		// }
+		// else {
 			platform = this.physics.add.sprite(posX, posY, 'ground');
 			platform.setImmovable(true);
 			platform.setVelocityX(gameOptions.platformStartSpeed * -1);
 			this.platformGroup.add(platform);
-		}
+		// }
 		platform.displayWidth = platformWidth;
 		this.nextPlatformDistance = Phaser.Math.Between(gameOptions.spawnRange[0], gameOptions.spawnRange[1]);
 		this.lastPlatformHeight = posY;
 
-		this.addCoin(posX, posY - 200);
+		var x = posX;
+		var y = posY - 50;
+
+		let coin = this.physics.add.sprite(posX, y, 'coin');
+			coin.setImmovable(true);
+			coin.setVelocityX(gameOptions.platformStartSpeed * -1);
+			// this.coinGroup.add(coin);
+
+		// this.addCoin(posX, posY - 200);
 	}
 
 	addCoin(posX, posY) {
