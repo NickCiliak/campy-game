@@ -2,6 +2,7 @@ import Phaser from 'phaser';
 
 import groundSprite from '../../assets/ground.png';
 import campySprite from '../../assets/campy2.png';
+import coinSprite from '../../assets/coin.png';
 
 let gameOptions = {
 	playerStartPosition: 100,
@@ -25,6 +26,7 @@ export default class Game extends Phaser.Scene {
 
 	preload() {
 		this.load.image('ground', groundSprite);
+		this.load.image('coin', coinSprite);
 		this.load.image('campy', campySprite);
 	}
 
@@ -46,6 +48,20 @@ export default class Game extends Phaser.Scene {
 			}
 		})
 
+		// create coins group
+		this.coinGroup = this.physics.add.group({
+			removeCallback: function (coin) {
+				coin.scene.coinPool.add(coin)
+			}
+		});
+
+		// create coins pool
+		this.coinPool = this.physics.add.group({
+			removeCallback: function (coin) {
+				coin.scene.coinGroup.add(coin)
+			}
+		});
+
 		// add a platform
 		this.addPlatform(this.config.width, this.config.width / 2, gameOptions.platformStartHeight);
 
@@ -59,6 +75,7 @@ export default class Game extends Phaser.Scene {
 
 		// set collision between Campy and platforms
 		this.physics.add.collider(this.player, this.platformGroup);
+		// this.physics.add.collider(this.coinGroup, this.platformGroup);
 
 	}
 
@@ -92,10 +109,8 @@ export default class Game extends Phaser.Scene {
 			let nextPlatformWidth = Phaser.Math.Between(gameOptions.platformSizeRange[0], gameOptions.platformSizeRange[1]);
 			let platformRandomHeight = gameOptions.platformHeightScale * Phaser.Math.Between(gameOptions.platformHeightRange[0], gameOptions.platformHeightRange[1]);
 
-			console.log(rightmostPlatformHeight, platformRandomHeight);
-
 			let nextPlatformGap = rightmostPlatformHeight + platformRandomHeight;
-			console.log(nextPlatformGap);
+
 			let minPlatformHeight = this.config.height * gameOptions.platformVerticalLimit[0];
 			let maxPlatformHeight = this.config.height * gameOptions.platformVerticalLimit[1];
 
@@ -125,6 +140,28 @@ export default class Game extends Phaser.Scene {
 		platform.displayWidth = platformWidth;
 		this.nextPlatformDistance = Phaser.Math.Between(gameOptions.spawnRange[0], gameOptions.spawnRange[1]);
 		this.lastPlatformHeight = posY;
+
+		this.addCoin(posX, posY - 200);
+	}
+
+	addCoin(posX, posY) {
+		console.log(posX, posY);
+		let coin;
+		if (this.coinPool.getLength()) {
+			console.log('ya');
+			coin = this.coinPool.getFirst();
+			coin.x = posX;
+			coin.y = posY;
+			coin.active = true;
+			coin.visible = true;
+			this.coinPool.remove(coin);
+		}
+		else {
+			coin = this.physics.add.sprite(posX, posY, 'coin');
+			coin.setImmovable(true);
+			coin.setVelocityX(gameOptions.platformStartSpeed * -1);
+			this.coinGroup.add(coin);
+		}
 	}
 
 	// the player jumps when on the ground, or once in the air as long as there are jumps left and the first jump was on the ground
