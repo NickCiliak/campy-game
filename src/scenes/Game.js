@@ -56,6 +56,7 @@ export default class Game extends Phaser.Scene {
 
 		// add controls
 		this.input.on('pointerdown', this.jump, this);
+		this.input.keyboard.on('keydown-SPACE', this.jump, this);
 
 		// set collision between Campy and platforms
 		this.physics.add.collider(this.player, this.platformGroup);
