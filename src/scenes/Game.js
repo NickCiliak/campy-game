@@ -1,7 +1,7 @@
 import Phaser from 'phaser';
 
 import groundSprite from '../../assets/ground.png';
-import campySprite from '../../assets/campy2.png';
+import campySprite from '../../assets/CampyWalk.png';
 import coinSprite from '../../assets/coin.png';
 
 let gameOptions = {
@@ -16,7 +16,8 @@ let gameOptions = {
 	jumpForce: 400,
 	jumps: 2,
 	platformHeightScale: 2,
-	platformVerticalLimit: [.1, .9]
+	platformVerticalLimit: [.2, .8],
+	coinChance: 2
 }
 
 export default class Game extends Phaser.Scene {
@@ -27,12 +28,15 @@ export default class Game extends Phaser.Scene {
 	preload() {
 		this.load.image('ground', groundSprite);
 		this.load.image('coin', coinSprite);
-		this.load.image('campy', campySprite);
+		this.load.spritesheet('campy', campySprite, { frameWidth: 175, frameHeight: 240 });
 	}
 
 	create() {
 		// alias the config
 		this.config = this.sys.game.config;
+
+		this.score = 0;
+		this.scoreText = this.add.text(16, 16, '0', { fontSize: '32px', fill: '#FFF', fontFamily: 'Poppins' });
 
 		// create platform group
 		this.platformGroup = this.add.group({
@@ -49,14 +53,14 @@ export default class Game extends Phaser.Scene {
 		})
 
 		// create coins group
-		this.coinGroup = this.physics.add.group({
+		this.coinGroup = this.add.group({
 			removeCallback: function (coin) {
 				coin.scene.coinPool.add(coin)
 			}
 		});
 
 		// create coins pool
-		this.coinPool = this.physics.add.group({
+		this.coinPool = this.add.group({
 			removeCallback: function (coin) {
 				coin.scene.coinGroup.add(coin)
 			}
@@ -69,6 +73,32 @@ export default class Game extends Phaser.Scene {
 		this.playerJumps = 0;
 		this.player = this.physics.add.sprite(gameOptions.playerStartPosition, gameOptions.playerStartHeight, 'campy');
 		this.player.setGravityY(gameOptions.playerGravity);
+		this.player.displayWidth = 35;
+		this.player.displayHeight = 48;
+
+		// campy animations
+		// this.anims.create({
+		// 	key: 'left',
+		// 	frames: this.anims.generateFrameNumbers('campy', { start: 0, end: 3 }),
+		// 	frameRate: 12,
+		// 	repeat: -1
+		// });
+
+		// this.anims.create({
+		// 	key: 'turn',
+		// 	frames: [{ key: 'dude', frame: 4 }],
+		// 	frameRate: 20
+		// });
+
+		this.anims.create({
+			key: 'right',
+			frames: this.anims.generateFrameNumbers('campy', { start: 1, end: 12 }),
+			frameRate: 12,
+			repeat: -1
+		});
+
+		this.player.anims.play('right', true);
+
 
 		// add controls
 		this.input.on('pointerdown', this.jump, this);
@@ -76,8 +106,8 @@ export default class Game extends Phaser.Scene {
 
 		// set collision between Campy and platforms
 		this.physics.add.collider(this.player, this.platformGroup);
-		// this.physics.add.collider(this.coinGroup, this.platformGroup);
 
+		this.physics.add.overlap(this.player, this.coinGroup, this.collectCoin, null, this);
 	}
 
 	update() {
@@ -95,7 +125,7 @@ export default class Game extends Phaser.Scene {
 		this.platformGroup.getChildren().forEach(function (platform) {
 			let platformDistance = this.config.width - platform.x - platform.displayWidth / 2;
 			minDistance = Math.min(minDistance, platformDistance);
-			if(platformDistance < minDistance){
+			if (platformDistance < minDistance) {
 				minDistance = platformDistance;
 				// rightmostPlatformHeight = platform.y;
 			}
@@ -138,44 +168,45 @@ export default class Game extends Phaser.Scene {
 		// 	this.platformPool.remove(platform);
 		// }
 		// else {
-			platform = this.physics.add.sprite(posX, posY, 'ground');
-			platform.setImmovable(true);
-			platform.setVelocityX(gameOptions.platformStartSpeed * -1);
-			this.platformGroup.add(platform);
+		platform = this.physics.add.sprite(posX, posY, 'ground');
+		platform.setImmovable(true);
+		platform.setVelocityX(gameOptions.platformStartSpeed * -1);
+		this.platformGroup.add(platform);
 		// }
 		platform.displayWidth = platformWidth;
 		this.nextPlatformDistance = Phaser.Math.Between(gameOptions.spawnRange[0], gameOptions.spawnRange[1]);
 		this.lastPlatformHeight = posY;
 
-		var x = posX;
-		var y = posY - 50;
 
-		let coin = this.physics.add.sprite(posX, y, 'coin');
-			coin.setImmovable(true);
-			coin.setVelocityX(gameOptions.platformStartSpeed * -1);
-			// this.coinGroup.add(coin);
-
-		// this.addCoin(posX, posY - 200);
+		// don't add a coin on the first platform
+		if (this.platformGroup.getLength() > 1 && (Phaser.Math.Between(0, 1) * gameOptions.coinChance > 0)) {
+			this.addCoin(posX, posY - 50);
+		}
 	}
 
 	addCoin(posX, posY) {
-		console.log(posX, posY);
 		let coin;
-		if (this.coinPool.getLength()) {
-			console.log('ya');
-			coin = this.coinPool.getFirst();
-			coin.x = posX;
-			coin.y = posY;
-			coin.active = true;
-			coin.visible = true;
-			this.coinPool.remove(coin);
-		}
-		else {
-			coin = this.physics.add.sprite(posX, posY, 'coin');
-			coin.setImmovable(true);
-			coin.setVelocityX(gameOptions.platformStartSpeed * -1);
-			this.coinGroup.add(coin);
-		}
+		// if (this.coinPool.getLength()) {
+		// 	console.log('ya');
+		// 	coin = this.coinPool.getFirst();
+		// 	coin.x = posX;
+		// 	coin.y = posY;
+		// 	coin.active = true;
+		// 	coin.visible = true;
+		// 	this.coinPool.remove(coin);
+		// }
+		// else {
+		coin = this.physics.add.sprite(posX, posY, 'coin');
+		// coin.setImmovable(true);
+		coin.setVelocityX(gameOptions.platformStartSpeed * -1);
+		this.coinGroup.add(coin);
+		// }
+	}
+
+	collectCoin(player, coin) {
+		coin.disableBody(true, true);
+		this.score += 10;
+		this.scoreText.setText(this.score);
 	}
 
 	// the player jumps when on the ground, or once in the air as long as there are jumps left and the first jump was on the ground
