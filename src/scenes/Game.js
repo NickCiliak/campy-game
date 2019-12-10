@@ -1,8 +1,21 @@
+/**
+ * TODO
+ * - sound effects for coins, losing, music?
+ * - adjust platform spacing and heights
+ * - make more difficult as time goes on
+ * - 3 CXA coins for power up mode
+ * - title screen
+ */
+
 import Phaser from 'phaser';
 
+import bgSprite from '../../assets/bg2.png';
 import groundSprite from '../../assets/ground.png';
-import campySprite from '../../assets/CampyWalk.png';
+import campySprite from '../../assets/CampyWalkSmall.png';
 import coinSprite from '../../assets/coin.png';
+import p1Sprite from '../../assets/p1.png';
+import p2Sprite from '../../assets/p2.png';
+import p3Sprite from '../../assets/p3.png';
 
 let gameOptions = {
 	playerStartPosition: 100,
@@ -10,8 +23,8 @@ let gameOptions = {
 	platformStartHeight: 360,
 	playerGravity: 900,
 	platformStartSpeed: 200,
-	spawnRange: [50, 100],
-	platformSizeRange: [100, 250],
+	spawnRange: [75, 200],
+	// platformSizeRange: [100, 250],
 	platformHeightRange: [-50, 50],
 	jumpForce: 400,
 	jumps: 2,
@@ -27,13 +40,26 @@ export default class Game extends Phaser.Scene {
 
 	preload() {
 		this.load.image('ground', groundSprite);
-		this.load.image('coin', coinSprite);
-		this.load.spritesheet('campy', campySprite, { frameWidth: 175, frameHeight: 240 });
+		this.load.image('bg', bgSprite);
+		this.load.image('p1', p1Sprite);
+		this.load.image('p2', p2Sprite);
+		this.load.image('p3', p3Sprite);
+		this.load.spritesheet('coin', coinSprite, { frameWidth: 144, frameHeight: 144 });
+		// this.load.spritesheet('campy', campySprite, { frameWidth: 175, frameHeight: 240 });
+		this.load.spritesheet('campy', campySprite, { frameWidth: 84, frameHeight: 105 });
 	}
 
 	create() {
 		// alias the config
 		this.config = this.sys.game.config;
+
+		// this.bg = this.add.image(this.config.width * 0.5, this.config.height * 0.5, 'bg');
+		this.physics.add.sprite(0, this.config.height * .5, 'bg');
+		// this.bg.setDisplaySize(320, 640);
+		// this.bg.setScale(.9);
+		// this.bg.setRotation(3.14159);
+
+		this.bgGroup = this.add.group();
 
 		this.score = 0;
 		this.scoreText = this.add.text(16, 16, '0', { fontSize: '32px', fill: '#FFF', fontFamily: 'Poppins' });
@@ -67,38 +93,38 @@ export default class Game extends Phaser.Scene {
 		});
 
 		// add a platform
-		this.addPlatform(this.config.width, this.config.width / 2, gameOptions.platformStartHeight);
+		this.addPlatform(3, this.config.width / 2, gameOptions.platformStartHeight);
 
 		// add a player
 		this.playerJumps = 0;
-		this.player = this.physics.add.sprite(gameOptions.playerStartPosition, gameOptions.playerStartHeight, 'campy');
+		this.player = this.physics.add.sprite(this.config.width * .5, gameOptions.playerStartHeight, 'campy');
+
 		this.player.setGravityY(gameOptions.playerGravity);
-		this.player.displayWidth = 35;
-		this.player.displayHeight = 48;
+		this.player.setDisplaySize(42, 58); // 504 w
+		// this.player.displayWidth = 42;
+		// this.player.displayHeight = 58;
 
 		// campy animations
-		// this.anims.create({
-		// 	key: 'left',
-		// 	frames: this.anims.generateFrameNumbers('campy', { start: 0, end: 3 }),
-		// 	frameRate: 12,
-		// 	repeat: -1
-		// });
-
-		// this.anims.create({
-		// 	key: 'turn',
-		// 	frames: [{ key: 'dude', frame: 4 }],
-		// 	frameRate: 20
-		// });
-
 		this.anims.create({
-			key: 'right',
+			key: 'walk',
 			frames: this.anims.generateFrameNumbers('campy', { start: 1, end: 12 }),
 			frameRate: 12,
 			repeat: -1
 		});
 
-		this.player.anims.play('right', true);
+		this.anims.create({
+			key: 'jump',
+			frames: this.anims.generateFrameNumbers('campy', { start: 7, end: 7 }),
+			frameRate: 12,
+			repeat: -1
+		});
 
+		this.anims.create({
+			key: 'coin',
+			frames: this.anims.generateFrameNumbers('coin', { start: 1, end: 5 }),
+			frameRate: 12,
+			repeat: -1
+		});
 
 		// add controls
 		this.input.on('pointerdown', this.jump, this);
@@ -110,14 +136,19 @@ export default class Game extends Phaser.Scene {
 		this.physics.add.overlap(this.player, this.coinGroup, this.collectCoin, null, this);
 	}
 
+	gameOver() {
+		this.gameHasStarted = false;
+		this.scene.start("CampyGame");
+	}
+
 	update() {
 		// game over
 		if (this.player.y > this.config.height) {
-			this.scene.start("CampyGame");
+			this.gameOver();
 		}
 
 		// keep Campy in the same x position
-		this.player.x = gameOptions.playerStartPosition;
+		this.player.x = this.config.width * .5;
 
 		// recycling platforms
 		let minDistance = this.config.width;
@@ -135,9 +166,15 @@ export default class Game extends Phaser.Scene {
 			}
 		}, this);
 
+		// check for touching the platform to set to walking
+		if (this.gameHasStarted && this.player.body.touching.down) {
+			this.player.anims.play('walk', true);
+		}
+
 		// adding new platforms
 		if (minDistance > this.nextPlatformDistance) {
-			let nextPlatformWidth = Phaser.Math.Between(gameOptions.platformSizeRange[0], gameOptions.platformSizeRange[1]);
+			// let nextPlatformWidth = Phaser.Math.Between(gameOptions.platformSizeRange[0], gameOptions.platformSizeRange[1]);
+			let nextPlatformWidth = Phaser.Math.RND.pick([1, 2, 3]);
 			let platformRandomHeight = gameOptions.platformHeightScale * Phaser.Math.Between(gameOptions.platformHeightRange[0], gameOptions.platformHeightRange[1]);
 
 			let nextPlatformGap = rightmostPlatformHeight + platformRandomHeight;
@@ -154,6 +191,16 @@ export default class Game extends Phaser.Scene {
 	// the core of the script: platform are added from the pool or created on the fly
 	addPlatform(platformWidth, posX, posY) {
 		// console.log(platformWidth, posX, posY);
+		let sprite = 'p1';
+		if (platformWidth === 1) {
+			sprite = 'p1';
+		}
+		if (platformWidth === 2) {
+			sprite = 'p2';
+		}
+		if (platformWidth === 3) {
+			sprite = 'p3';
+		}
 		let platform;
 
 		/**
@@ -163,24 +210,28 @@ export default class Game extends Phaser.Scene {
 		// if (this.platformPool.getLength()) {
 		// 	platform = this.platformPool.getFirst();
 		// 	platform.x = posX;
+
 		// 	platform.active = true;
 		// 	platform.visible = true;
 		// 	this.platformPool.remove(platform);
 		// }
 		// else {
-		platform = this.physics.add.sprite(posX, posY, 'ground');
+		platform = this.physics.add.sprite(posX, posY, sprite);
 		platform.setImmovable(true);
-		platform.setVelocityX(gameOptions.platformStartSpeed * -1);
+
+		if (this.gameHasStarted) {
+			platform.setVelocityX(gameOptions.platformStartSpeed * -1);
+		}
 		this.platformGroup.add(platform);
 		// }
-		platform.displayWidth = platformWidth;
+		platform.setScale(.5);
+		// platform.displayWidth = 350;
 		this.nextPlatformDistance = Phaser.Math.Between(gameOptions.spawnRange[0], gameOptions.spawnRange[1]);
 		this.lastPlatformHeight = posY;
 
-
 		// don't add a coin on the first platform
 		if (this.platformGroup.getLength() > 1 && (Phaser.Math.Between(0, 1) * gameOptions.coinChance > 0)) {
-			this.addCoin(posX, posY - 50);
+			this.addCoin(posX, posY - 40);
 		}
 	}
 
@@ -197,6 +248,8 @@ export default class Game extends Phaser.Scene {
 		// }
 		// else {
 		coin = this.physics.add.sprite(posX, posY, 'coin');
+		coin.setDisplaySize(20, 20, true);
+		coin.anims.play('coin');
 		// coin.setImmovable(true);
 		coin.setVelocityX(gameOptions.platformStartSpeed * -1);
 		this.coinGroup.add(coin);
@@ -209,13 +262,28 @@ export default class Game extends Phaser.Scene {
 		this.scoreText.setText(this.score);
 	}
 
+	startGame() {
+		this.gameHasStarted = true;
+		this.platformGroup.getChildren().forEach(function(platform) {
+			platform.setVelocityX(gameOptions.platformStartSpeed * -1);
+		});
+
+		this.player.anims.play('walk', true);
+	}
+
 	// the player jumps when on the ground, or once in the air as long as there are jumps left and the first jump was on the ground
 	jump() {
+		if (!this.gameHasStarted) {
+			this.startGame();
+			return;
+		}
+
 		if (this.player.body.touching.down || (this.playerJumps > 0 && this.playerJumps < gameOptions.jumps)) {
 			if (this.player.body.touching.down) {
 				this.playerJumps = 0;
 			}
 			this.player.setVelocityY(gameOptions.jumpForce * -1);
+			this.player.anims.play('jump', true);
 			this.playerJumps++;
 		}
 	}
