@@ -5,7 +5,7 @@
  * - make it save high score //
  * - music?
  * - title screen & score graphics
- * - bug where platform not smoothly entering from right
+ * - bug where platform not smoothly entering from right //
  * - make background scroll
  * - iphone height is too tall, causes scrollbar
  * - 3 CXA coins for power up mode
@@ -29,9 +29,9 @@ let gameOptions = {
 	playerStartHeight: 600,
 	platformStartHeight: 720,
 	playerGravity: 900,
-	platformStartSpeed: 200,
-	spawnRange: [50, 200],
-	// platformSizeRange: [100, 250],
+	platformStartSpeed: 250,
+	// spawnRange: [50, 200],
+	spawnRange: [-100, 50],
 	platformHeightRange: [-50, 50],
 	jumpForce: 400,
 	jumps: 2,
@@ -64,7 +64,7 @@ export default class Game extends Phaser.Scene {
 		this.platformSpriteOptions = [
 			{
 				id: 'p1',
-				levels: '345'
+				levels: '3456'
 			},
 			{
 				id: 'p2',
@@ -110,7 +110,8 @@ export default class Game extends Phaser.Scene {
 		this.coinGroup = this.add.group();
 
 		// add a platform
-		this.addPlatform(3, this.config.width / 2, gameOptions.platformStartHeight);
+		this.addPlatform(3, this.config.width * .5, gameOptions.platformStartHeight);
+		this.addPlatform(3, this.config.width * .85, gameOptions.platformStartHeight + Phaser.Math.Between(-80, 80)); // add second platform
 
 		// add a player
 		this.playerJumps = 0;
@@ -210,7 +211,7 @@ export default class Game extends Phaser.Scene {
 
 			let nextPlatformHeight = Phaser.Math.Clamp(nextPlatformGap, minPlatformHeight, maxPlatformHeight);
 
-			this.addPlatform(nextPlatformWidth, this.config.width + nextPlatformWidth / 2, nextPlatformHeight);
+			this.addPlatform(nextPlatformWidth, this.config.width + 150, nextPlatformHeight);
 		}
 	}
 
@@ -246,10 +247,10 @@ export default class Game extends Phaser.Scene {
 		platform.setScale(.5);
 		// platform.displayWidth = 350;
 
-		let level = this.getDifficultyLevel();
-		let initialSpawnRangeBasedOnLevel = gameOptions.spawnRange[0] + level * .8;
+		let initialSpawnRangeBasedOnLevel = gameOptions.spawnRange[0] + currentLevel * .8;
+		let endRangeBasedOnLevel = gameOptions.spawnRange[1] + currentLevel * 1.2;
 
-		this.nextPlatformDistance = Phaser.Math.Between(initialSpawnRangeBasedOnLevel, gameOptions.spawnRange[1]);
+		this.nextPlatformDistance = Phaser.Math.Between(initialSpawnRangeBasedOnLevel, endRangeBasedOnLevel);
 		this.lastPlatformHeight = posY;
 
 		console.log(this.nextPlatformDistance);
@@ -307,6 +308,11 @@ export default class Game extends Phaser.Scene {
 		}
 
 		let sec = this.getSecondsSinceStartTime();
+
+		if (sec > 90) {
+			console.log('level 6 !!!!!');
+			return 6;
+		}
 
 		if (sec > 60) {
 			console.log('level 5');
