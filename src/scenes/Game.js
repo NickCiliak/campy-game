@@ -87,19 +87,20 @@ export default class Game extends Phaser.Scene {
 		this.bg = this.physics.add.sprite(0, this.config.height * .5, 'bg');
 		this.bg.setDisplaySize(1810, 1280);
 
-		this.banner = this.physics.add.sprite(this.config.width * .5, 40, 'banner');
-		this.bannerBottom = this.physics.add.sprite(this.config.width * .5, this.config.height, 'banner');
-		this.bannerBottom.setRotation(3.14159);
+		this.banner = this.physics.add.sprite(this.config.width * .5, 0, 'banner');
+		// this.bannerBottom = this.physics.add.sprite(this.config.width * .5, this.config.height, 'banner');
+		// this.bannerBottom.setRotation(3.14159);
 		// this.banner.setDisplaySize(1810, 1280);
 
 		this.score = 0;
-		this.scoreText = this.add.text(32, 32, '0', { fontSize: '64px', fill: '#FFF', fontFamily: 'Poppins' });
+		this.scoreText = this.add.text(32, 40, '0', { fontSize: '72px', fill: '#FFF', fontFamily: 'Poppins' });
 
 
 		let highScore = this.getHighScoreFromStorage();
 		if (highScore) {
-			this.highScoreText = this.add.text(32, 100, '0', { fontSize: '32px', fill: '#FFF', fontFamily: 'Poppins' });
-			this.highScoreText.setText(`Best: ${highScore}`);
+			this.add.text(this.config.width - 100, 40, '0', { fontSize: '24px', fill: '#FFF', fontFamily: 'Poppins' }).setText('HIGH');
+			this.highScoreText = this.add.text(this.config.width - 100, 70, '0', { fontSize: '36px', fill: '#FFF', fontFamily: 'Poppins' });
+			this.highScoreText.setText(highScore);
 		}
 
 		// create platform group
