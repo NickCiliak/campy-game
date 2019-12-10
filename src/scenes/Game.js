@@ -13,7 +13,7 @@
 
 import Phaser from 'phaser';
 
-import bgSprite from '../../assets/bg3.png';
+import bgSprite from '../../assets/bg4.png';
 import campySprite from '../../assets/campyfull2.png';
 import coinSprite from '../../assets/coin.png';
 import bannerSprite from '../../assets/banner.png';
@@ -30,7 +30,6 @@ let gameOptions = {
 	platformStartHeight: 720,
 	playerGravity: 900,
 	platformStartSpeed: 250,
-	// spawnRange: [50, 200],
 	spawnRange: [-100, 50],
 	platformHeightRange: [-50, 50],
 	jumpForce: 400,
@@ -57,7 +56,6 @@ export default class Game extends Phaser.Scene {
 		this.load.audio('jump', jumpSound);
 		this.load.audio('fall', fallSound);
 		this.load.spritesheet('coin', coinSprite, { frameWidth: 144, frameHeight: 144 });
-		// this.load.spritesheet('campy', campySprite, { frameWidth: 182, frameHeight: 236 }); // without jump
 		this.load.spritesheet('campy', campySprite, { frameWidth: 208, frameHeight: 236 });
 	}
 
@@ -91,13 +89,9 @@ export default class Game extends Phaser.Scene {
 		this.bg2.setDisplaySize(gameOptions.bgWidth, 1280);
 
 		this.banner = this.physics.add.sprite(this.config.width * .5, 0, 'banner');
-		// this.bannerBottom = this.physics.add.sprite(this.config.width * .5, this.config.height, 'banner');
-		// this.bannerBottom.setRotation(3.14159);
-		// this.banner.setDisplaySize(1810, 1280);
 
 		this.score = 0;
 		this.scoreText = this.add.text(32, 40, '0', { fontSize: '72px', fill: '#FFF', fontFamily: 'Poppins' });
-
 
 		let highScore = this.getHighScoreFromStorage();
 		if (highScore) {
@@ -122,9 +116,7 @@ export default class Game extends Phaser.Scene {
 		this.player.setFrame(1);
 
 		this.player.setGravityY(gameOptions.playerGravity);
-		this.player.setDisplaySize(84, 116); // 504 w
-		// this.player.displayWidth = 42;
-		// this.player.displayHeight = 58;
+		this.player.setDisplaySize(84, 116);
 
 		// campy animations
 		this.anims.create({
