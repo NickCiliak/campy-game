@@ -2,9 +2,9 @@
  * TODO
  * - adjust platform spacing and heights //
  * - make more difficult as time goes on //
- * - make it save high score
- * - sound effects for losing / music
- * - title screen
+ * - make it save high score //
+ * - music?
+ * - title screen & score graphics
  * - bug where platform not smoothly entering from right
  * - make background scroll
  * - iphone height is too tall, causes scrollbar
@@ -16,11 +16,13 @@ import Phaser from 'phaser';
 import bgSprite from '../../assets/bg2.png';
 import campySprite from '../../assets/campyfull.png';
 import coinSprite from '../../assets/coin.png';
+import bannerSprite from '../../assets/banner.png';
 import p1Sprite from '../../assets/p1.png';
 import p2Sprite from '../../assets/p2.png';
 import p3Sprite from '../../assets/p3.png';
 import coinSound from '../../assets/coin.mp3';
 import jumpSound from '../../assets/jump.mp3';
+import fallSound from '../../assets/fall.mp3';
 
 let gameOptions = {
 	playerStartPosition: 200,
@@ -34,7 +36,7 @@ let gameOptions = {
 	jumpForce: 400,
 	jumps: 2,
 	platformHeightScale: 2,
-	platformVerticalLimit: [.2, .8],
+	platformVerticalLimit: [.4, .8],
 	coinChance: 2
 }
 
@@ -45,11 +47,13 @@ export default class Game extends Phaser.Scene {
 
 	preload() {
 		this.load.image('bg', bgSprite);
+		this.load.image('banner', bannerSprite);
 		this.load.image('p1', p1Sprite);
 		this.load.image('p2', p2Sprite);
 		this.load.image('p3', p3Sprite);
 		this.load.audio('coin', coinSound);
 		this.load.audio('jump', jumpSound);
+		this.load.audio('fall', fallSound);
 		this.load.spritesheet('coin', coinSprite, { frameWidth: 144, frameHeight: 144 });
 		// this.load.spritesheet('campy', campySprite, { frameWidth: 182, frameHeight: 236 }); // without jump
 		this.load.spritesheet('campy', campySprite, { frameWidth: 208, frameHeight: 236 });
@@ -77,10 +81,16 @@ export default class Game extends Phaser.Scene {
 		// setup sounds
 		this.coinSound = this.sound.add('coin');
 		this.jumpSound = this.sound.add('jump');
+		this.fallSound = this.sound.add('fall');
 
 		// this.bg = this.add.image(this.config.width * 0.5, this.config.height * 0.5, 'bg');
 		this.bg = this.physics.add.sprite(0, this.config.height * .5, 'bg');
 		this.bg.setDisplaySize(1810, 1280);
+
+		this.banner = this.physics.add.sprite(this.config.width * .5, 40, 'banner');
+		this.bannerBottom = this.physics.add.sprite(this.config.width * .5, this.config.height, 'banner');
+		this.bannerBottom.setRotation(3.14159);
+		// this.banner.setDisplaySize(1810, 1280);
 
 		this.score = 0;
 		this.scoreText = this.add.text(32, 32, '0', { fontSize: '64px', fill: '#FFF', fontFamily: 'Poppins' });
@@ -88,7 +98,7 @@ export default class Game extends Phaser.Scene {
 
 		let highScore = this.getHighScoreFromStorage();
 		if (highScore) {
-			this.highScoreText = this.add.text(32, 128, '0', { fontSize: '32px', fill: '#FFF', fontFamily: 'Poppins' });
+			this.highScoreText = this.add.text(32, 100, '0', { fontSize: '32px', fill: '#FFF', fontFamily: 'Poppins' });
 			this.highScoreText.setText(`Best: ${highScore}`);
 		}
 
@@ -144,8 +154,6 @@ export default class Game extends Phaser.Scene {
 	}
 
 	gameOver() {
-		this.getDifficultyLevel
-
 		let highScore = this.getHighScoreFromStorage();
 
 		if (this.score > highScore) {
@@ -153,6 +161,7 @@ export default class Game extends Phaser.Scene {
 			this.highScore = this.score;
 		}
 
+		this.fallSound.play();
 		this.gameHasStarted = false;
 		this.scene.start("CampyGame");
 	}
