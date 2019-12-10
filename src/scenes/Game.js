@@ -1,18 +1,19 @@
 /**
  * TODO
- * - sound effects for coins, losing, music?
  * - adjust platform spacing and heights
  * - make more difficult as time goes on
- * - 3 CXA coins for power up mode
+ * - make it save high score
+ * - sound effects for losing / music
  * - title screen
+  * - make background scroll
  * - iphone height is too tall, causes scrollbar
- * - make background scroll
+ * - 3 CXA coins for power up mode
  */
 
 import Phaser from 'phaser';
 
 import bgSprite from '../../assets/bg2.png';
-import campySprite from '../../assets/CampyWalk3.png';
+import campySprite from '../../assets/campyfull.png';
 import coinSprite from '../../assets/coin.png';
 import p1Sprite from '../../assets/p1.png';
 import p2Sprite from '../../assets/p2.png';
@@ -49,17 +50,32 @@ export default class Game extends Phaser.Scene {
 		this.load.audio('coin', coinSound);
 		this.load.audio('jump', jumpSound);
 		this.load.spritesheet('coin', coinSprite, { frameWidth: 144, frameHeight: 144 });
-		// this.load.spritesheet('campy', campySprite, { frameWidth: 175, frameHeight: 240 });
-		this.load.spritesheet('campy', campySprite, { frameWidth: 182, frameHeight: 236 });
+		// this.load.spritesheet('campy', campySprite, { frameWidth: 182, frameHeight: 236 }); // without jump
+		this.load.spritesheet('campy', campySprite, { frameWidth: 208, frameHeight: 236 });
 	}
 
 	create() {
-		// alias the config
-        this.config = this.sys.game.config;
 
-        // setup sounds
-        this.coinSound = this.sound.add('coin');
-        this.jumpSound = this.sound.add('jump');
+		this.platformSpriteOptions = [
+			{
+				id: 'p1',
+				levels: '345'
+			},
+			{
+				id: 'p2',
+				levels: '23'
+			},
+			{
+				id: 'p3',
+				levels: '12'
+			},
+		]
+		// alias the config
+		this.config = this.sys.game.config;
+
+		// setup sounds
+		this.coinSound = this.sound.add('coin');
+		this.jumpSound = this.sound.add('jump');
 
 		// this.bg = this.add.image(this.config.width * 0.5, this.config.height * 0.5, 'bg');
 		this.bg = this.physics.add.sprite(0, this.config.height * .5, 'bg');
@@ -83,8 +99,8 @@ export default class Game extends Phaser.Scene {
 
 		// add a player
 		this.playerJumps = 0;
-        this.player = this.physics.add.sprite(this.config.width * .5, gameOptions.playerStartHeight, 'campy');
-        this.player.setFrame(2);
+		this.player = this.physics.add.sprite(this.config.width * .5, gameOptions.playerStartHeight, 'campy');
+		this.player.setFrame(2);
 
 		this.player.setGravityY(gameOptions.playerGravity);
 		this.player.setDisplaySize(84, 116); // 504 w
@@ -94,16 +110,16 @@ export default class Game extends Phaser.Scene {
 		// campy animations
 		this.anims.create({
 			key: 'walk',
-			frames: this.anims.generateFrameNumbers('campy', { start: 1, end: 12 }),
+			frames: this.anims.generateFrameNumbers('campy', { start: 1, end: 8 }),
 			frameRate: 12,
 			repeat: -1
 		});
 
 		this.anims.create({
 			key: 'jump',
-			frames: this.anims.generateFrameNumbers('campy', { start: 7, end: 7 }),
+			frames: this.anims.generateFrameNumbers('campy', { start: 8, end: 11 }),
 			frameRate: 12,
-			repeat: -1
+			repeat: 0
 		});
 
 		this.anims.create({
@@ -175,21 +191,18 @@ export default class Game extends Phaser.Scene {
 		}
 	}
 
-	// the core of the script: platform are added from the pool or created on the fly
 	addPlatform(platformWidth, posX, posY) {
-		// console.log(platformWidth, posX, posY);
-		let sprite = 'p1';
-		if (platformWidth === 1) {
-			sprite = 'p1';
-		}
-		if (platformWidth === 2) {
-			sprite = 'p2';
-		}
-		if (platformWidth === 3) {
-			sprite = 'p3';
-		}
+		// todo - not using platformWidth param anymore
 
-		let platform = this.physics.add.sprite(posX, posY, sprite);
+		let currentLevel = this.getDifficultyLevel();
+
+		let spriteOptionsBasedOnLevel = this.platformSpriteOptions.filter(function(spr) {
+			return spr.levels.indexOf(currentLevel) !== -1;
+		});
+
+		let chosenPlatform = Phaser.Math.RND.pick(spriteOptionsBasedOnLevel);
+
+		let platform = this.physics.add.sprite(posX, posY, chosenPlatform.id);
 		platform.setImmovable(true);
 
 		if (this.gameHasStarted) {
@@ -211,7 +224,7 @@ export default class Game extends Phaser.Scene {
 	addCoin(posX, posY) {
 		let coin = this.physics.add.sprite(posX, posY, 'coin');
 		coin.setDisplaySize(36, 36, true);
-        coin.anims.play('coin');
+		coin.anims.play('coin');
 
 		if (this.gameHasStarted) {
 			coin.setVelocityX(gameOptions.platformStartSpeed * -1);
@@ -221,27 +234,60 @@ export default class Game extends Phaser.Scene {
 	}
 
 	collectCoin(player, coin) {
-        coin.disableBody(true, true);
-        this.coinSound.play();
+		coin.disableBody(true, true);
+		this.coinSound.play();
 		this.score += 10;
 		this.scoreText.setText(this.score);
 	}
 
 	startGame() {
 		this.gameHasStarted = true;
+		this.startTime = Date.now();
 
 		// start moving the existing platforms
-		this.platformGroup.getChildren().forEach(function(platform) {
+		this.platformGroup.getChildren().forEach(function (platform) {
 			platform.setVelocityX(gameOptions.platformStartSpeed * -1);
 		});
 
 		// start moving the existing coins
-		this.coinGroup.getChildren().forEach(function(coin) {
+		this.coinGroup.getChildren().forEach(function (coin) {
 			coin.setVelocityX(gameOptions.platformStartSpeed * -1);
 		});
 
 		// play the campy walking animation
 		this.player.anims.play('walk', true);
+	}
+
+	getSecondsSinceStartTime() {
+		return Math.floor((Date.now() - this.startTime) / 1000);
+	}
+
+	getDifficultyLevel() {
+		let sec = this.getSecondsSinceStartTime();
+
+		if (sec > 60) {
+			console.log('level 5');
+			return 5;
+		}
+
+		if (sec > 45) {
+			console.log('level 4');
+			return 4;
+		}
+
+
+		if (sec > 30) {
+			console.log('level 3');
+			return 3;
+		}
+
+		if (sec > 10) {
+			console.log('level 2');
+			return 2;
+		}
+
+		console.log('level 1');
+		return 1;
 	}
 
 	jump() {
@@ -255,8 +301,8 @@ export default class Game extends Phaser.Scene {
 				this.playerJumps = 0;
 			}
 			this.player.setVelocityY(gameOptions.jumpForce * -1);
-            this.player.anims.play('jump', true);
-            this.jumpSound.play();
+			this.player.anims.play('jump', true);
+			this.jumpSound.play();
 			this.playerJumps++;
 		}
 	}
