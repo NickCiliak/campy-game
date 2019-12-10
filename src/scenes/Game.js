@@ -14,7 +14,7 @@
 import Phaser from 'phaser';
 
 import bgSprite from '../../assets/bg3.png';
-import campySprite from '../../assets/campyfull.png';
+import campySprite from '../../assets/campyfull2.png';
 import coinSprite from '../../assets/coin.png';
 import bannerSprite from '../../assets/banner.png';
 import p1Sprite from '../../assets/p1.png';
@@ -119,7 +119,7 @@ export default class Game extends Phaser.Scene {
 		// add a player
 		this.playerJumps = 0;
 		this.player = this.physics.add.sprite(this.config.width * .5, gameOptions.playerStartHeight, 'campy');
-		this.player.setFrame(2);
+		this.player.setFrame(1);
 
 		this.player.setGravityY(gameOptions.playerGravity);
 		this.player.setDisplaySize(84, 116); // 504 w
@@ -129,21 +129,21 @@ export default class Game extends Phaser.Scene {
 		// campy animations
 		this.anims.create({
 			key: 'walk',
-			frames: this.anims.generateFrameNumbers('campy', { start: 1, end: 8 }),
+			frames: this.anims.generateFrameNumbers('campy', { start: 0, end: 7 }),
 			frameRate: 12,
 			repeat: -1
 		});
 
 		this.anims.create({
 			key: 'jump',
-			frames: this.anims.generateFrameNumbers('campy', { start: 8, end: 11 }),
+			frames: this.anims.generateFrameNumbers('campy', { start: 8, end: 10 }),
 			frameRate: 12,
 			repeat: 0
 		});
 
 		this.anims.create({
 			key: 'coin',
-			frames: this.anims.generateFrameNumbers('coin', { start: 1, end: 5 }),
+			frames: this.anims.generateFrameNumbers('coin', { start: 0, end: 4 }),
 			frameRate: 12,
 			repeat: -1
 		});
