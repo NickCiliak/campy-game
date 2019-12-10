@@ -1,11 +1,12 @@
 /**
  * TODO
- * - adjust platform spacing and heights
- * - make more difficult as time goes on
+ * - adjust platform spacing and heights //
+ * - make more difficult as time goes on //
  * - make it save high score
  * - sound effects for losing / music
  * - title screen
-  * - make background scroll
+ * - bug where platform not smoothly entering from right
+ * - make background scroll
  * - iphone height is too tall, causes scrollbar
  * - 3 CXA coins for power up mode
  */
@@ -27,7 +28,7 @@ let gameOptions = {
 	platformStartHeight: 720,
 	playerGravity: 900,
 	platformStartSpeed: 200,
-	spawnRange: [50, 100],
+	spawnRange: [50, 200],
 	// platformSizeRange: [100, 250],
 	platformHeightRange: [-50, 50],
 	jumpForce: 400,
@@ -80,13 +81,16 @@ export default class Game extends Phaser.Scene {
 		// this.bg = this.add.image(this.config.width * 0.5, this.config.height * 0.5, 'bg');
 		this.bg = this.physics.add.sprite(0, this.config.height * .5, 'bg');
 		this.bg.setDisplaySize(1810, 1280);
-		// this.bg.setScale(.9);
-		// this.bg.setRotation(3.14159);
-
-		// this.bgGroup = this.add.group();
 
 		this.score = 0;
-		this.scoreText = this.add.text(16, 16, '0', { fontSize: '64px', fill: '#FFF', fontFamily: 'Poppins' });
+		this.scoreText = this.add.text(32, 32, '0', { fontSize: '64px', fill: '#FFF', fontFamily: 'Poppins' });
+
+
+		let highScore = this.getHighScoreFromStorage();
+		if (highScore) {
+			this.highScoreText = this.add.text(32, 128, '0', { fontSize: '32px', fill: '#FFF', fontFamily: 'Poppins' });
+			this.highScoreText.setText(`Best: ${highScore}`);
+		}
 
 		// create platform group
 		this.platformGroup = this.add.group();
@@ -140,6 +144,15 @@ export default class Game extends Phaser.Scene {
 	}
 
 	gameOver() {
+		this.getDifficultyLevel
+
+		let highScore = this.getHighScoreFromStorage();
+
+		if (this.score > highScore) {
+			localStorage.setItem('campy-high-score', this.score);
+			this.highScore = this.score;
+		}
+
 		this.gameHasStarted = false;
 		this.scene.start("CampyGame");
 	}
@@ -191,6 +204,16 @@ export default class Game extends Phaser.Scene {
 		}
 	}
 
+	getHighScoreFromStorage() {
+		let value = localStorage.getItem('campy-high-score');
+
+		if (isNaN(value)) {
+			return 0;
+		}
+
+		return value;
+	}
+
 	addPlatform(platformWidth, posX, posY) {
 		// todo - not using platformWidth param anymore
 
@@ -212,8 +235,14 @@ export default class Game extends Phaser.Scene {
 		this.platformGroup.add(platform);
 		platform.setScale(.5);
 		// platform.displayWidth = 350;
-		this.nextPlatformDistance = Phaser.Math.Between(gameOptions.spawnRange[0], gameOptions.spawnRange[1]);
+
+		let level = this.getDifficultyLevel();
+		let initialSpawnRangeBasedOnLevel = gameOptions.spawnRange[0] + level * .8;
+
+		this.nextPlatformDistance = Phaser.Math.Between(initialSpawnRangeBasedOnLevel, gameOptions.spawnRange[1]);
 		this.lastPlatformHeight = posY;
+
+		console.log(this.nextPlatformDistance);
 
 		// don't add a coin on the first platform
 		if (this.platformGroup.getLength() > 1 && (Phaser.Math.Between(0, 1) * gameOptions.coinChance > 0)) {
@@ -263,6 +292,10 @@ export default class Game extends Phaser.Scene {
 	}
 
 	getDifficultyLevel() {
+		if (!this.gameHasStarted) {
+			return 1;
+		}
+
 		let sec = this.getSecondsSinceStartTime();
 
 		if (sec > 60) {
@@ -277,16 +310,16 @@ export default class Game extends Phaser.Scene {
 
 
 		if (sec > 30) {
-			console.log('level 3');
+			// console.log('level 3');
 			return 3;
 		}
 
 		if (sec > 10) {
-			console.log('level 2');
+			// console.log('level 2');
 			return 2;
 		}
 
-		console.log('level 1');
+		// console.log('level 1');
 		return 1;
 	}
 
