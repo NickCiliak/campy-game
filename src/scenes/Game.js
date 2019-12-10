@@ -3,8 +3,7 @@
  * - adjust platform spacing and heights //
  * - make more difficult as time goes on //
  * - make it save high score //
- * - music?
- * - title screen & score graphics
+ * - title screen & score graphics //
  * - bug where platform not smoothly entering from right //
  * - make background scroll //
  * - iphone height is too tall, causes scrollbar
@@ -17,6 +16,7 @@ import bgSprite from '../../assets/bg4.png';
 import campySprite from '../../assets/campyfull2.png';
 import coinSprite from '../../assets/coin.png';
 import bannerSprite from '../../assets/banner.png';
+import titleSprite from '../../assets/title.png';
 import p1Sprite from '../../assets/p1.png';
 import p2Sprite from '../../assets/p2.png';
 import p3Sprite from '../../assets/p3.png';
@@ -49,6 +49,7 @@ export default class Game extends Phaser.Scene {
 	preload() {
 		this.load.image('bg', bgSprite);
 		this.load.image('banner', bannerSprite);
+		this.load.image('title', titleSprite);
 		this.load.image('p1', p1Sprite);
 		this.load.image('p2', p2Sprite);
 		this.load.image('p3', p3Sprite);
@@ -87,6 +88,15 @@ export default class Game extends Phaser.Scene {
 		this.bg1.setDisplaySize(gameOptions.bgWidth, 1280);
 		this.bg2 = this.physics.add.sprite(gameOptions.bgWidth + gameOptions.bgWidth  * .5, this.config.height * .5, 'bg');
 		this.bg2.setDisplaySize(gameOptions.bgWidth, 1280);
+
+		this.title = this.add.image(this.config.width * .5, 300, 'title').setScale(.8);
+		this.tweens.add({
+			targets: this.title,
+			y: 360,
+			duration: 600,
+			ease: 'Power2',
+			alpha: { from: 0, to: 1 },
+		});
 
 		this.banner = this.physics.add.sprite(this.config.width * .5, 0, 'banner');
 
@@ -289,6 +299,15 @@ export default class Game extends Phaser.Scene {
 	startGame() {
 		this.gameHasStarted = true;
 		this.startTime = Date.now();
+
+		this.tweens.add({
+			targets: this.title,
+			y: 300,
+			duration: 600,
+			alpha: { from: 1, to: 0 },
+			ease: 'Power2',
+			// completeDelay: 3000
+		});
 
 		// start moving the existing platforms
 		this.platformGroup.getChildren().forEach(function (platform) {
