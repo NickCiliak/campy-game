@@ -219,14 +219,11 @@ export default class Game extends Phaser.Scene {
 			this.addPlatform(nextPlatformWidth, this.config.width + 150, nextPlatformHeight);
 		}
 
-		// console.log(this.b g1.x, this.bg2.x);
 		// leap frog the backgrounds
 		if (this.bg1.x <= gameOptions.bgWidth * -.5) {
-			console.log('yeh 1');
 			this.bg1.setPosition(gameOptions.bgWidth + gameOptions.bgWidth * .5 - 10, this.config.height * .5);
 		}
 		if (this.bg2.x <= gameOptions.bgWidth * - .5 ) {
-			console.log('mmm 2');
 			this.bg2.setPosition(gameOptions.bgWidth + gameOptions.bgWidth * .5 - 10  , this.config.height * .5);
 		}
 	}
@@ -261,15 +258,12 @@ export default class Game extends Phaser.Scene {
 
 		this.platformGroup.add(platform);
 		platform.setScale(.5);
-		// platform.displayWidth = 350;
 
 		let initialSpawnRangeBasedOnLevel = gameOptions.spawnRange[0] + currentLevel * .8;
 		let endRangeBasedOnLevel = gameOptions.spawnRange[1] + currentLevel * 1.2;
 
 		this.nextPlatformDistance = Phaser.Math.Between(initialSpawnRangeBasedOnLevel, endRangeBasedOnLevel);
 		this.lastPlatformHeight = posY;
-
-		console.log(this.nextPlatformDistance);
 
 		// don't add a coin on the first platform
 		if (this.platformGroup.getLength() > 1 && (Phaser.Math.Between(0, 1) * gameOptions.coinChance > 0)) {
@@ -339,32 +333,25 @@ export default class Game extends Phaser.Scene {
 		let sec = this.getSecondsSinceStartTime();
 
 		if (sec > 90) {
-			console.log('level 6 !!!!!');
 			return 6;
 		}
 
 		if (sec > 60) {
-			console.log('level 5');
 			return 5;
 		}
 
 		if (sec > 45) {
-			console.log('level 4');
 			return 4;
 		}
 
-
 		if (sec > 30) {
-			// console.log('level 3');
 			return 3;
 		}
 
 		if (sec > 10) {
-			// console.log('level 2');
 			return 2;
 		}
 
-		// console.log('level 1');
 		return 1;
 	}
 
