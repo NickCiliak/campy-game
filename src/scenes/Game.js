@@ -13,7 +13,7 @@
 
 import Phaser from 'phaser';
 
-import bgSprite from '../../assets/bg2.png';
+import bgSprite from '../../assets/bg3.png';
 import campySprite from '../../assets/campyfull.png';
 import coinSprite from '../../assets/coin.png';
 import bannerSprite from '../../assets/banner.png';
@@ -37,7 +37,9 @@ let gameOptions = {
 	jumps: 2,
 	platformHeightScale: 2,
 	platformVerticalLimit: [.4, .8],
-	coinChance: 2
+	coinChance: 2,
+	backgroundSpeedReducer: .5,
+	bgWidth: 2591
 }
 
 export default class Game extends Phaser.Scene {
@@ -83,9 +85,10 @@ export default class Game extends Phaser.Scene {
 		this.jumpSound = this.sound.add('jump');
 		this.fallSound = this.sound.add('fall');
 
-		// this.bg = this.add.image(this.config.width * 0.5, this.config.height * 0.5, 'bg');
-		this.bg = this.physics.add.sprite(0, this.config.height * .5, 'bg');
-		this.bg.setDisplaySize(1810, 1280);
+		this.bg1 = this.physics.add.sprite(gameOptions.bgWidth * .5, this.config.height * .5, 'bg');
+		this.bg1.setDisplaySize(gameOptions.bgWidth, 1280);
+		this.bg2 = this.physics.add.sprite(gameOptions.bgWidth + gameOptions.bgWidth  * .5, this.config.height * .5, 'bg');
+		this.bg2.setDisplaySize(gameOptions.bgWidth, 1280);
 
 		this.banner = this.physics.add.sprite(this.config.width * .5, 0, 'banner');
 		// this.bannerBottom = this.physics.add.sprite(this.config.width * .5, this.config.height, 'banner');
@@ -213,6 +216,17 @@ export default class Game extends Phaser.Scene {
 
 			this.addPlatform(nextPlatformWidth, this.config.width + 150, nextPlatformHeight);
 		}
+
+		// console.log(this.b g1.x, this.bg2.x);
+		// leap frog the backgrounds
+		if (this.bg1.x <= gameOptions.bgWidth * -.5) {
+			console.log('yeh 1');
+			this.bg1.setPosition(gameOptions.bgWidth + gameOptions.bgWidth * .5 - 10, this.config.height * .5);
+		}
+		if (this.bg2.x <= gameOptions.bgWidth * - .5 ) {
+			console.log('mmm 2');
+			this.bg2.setPosition(gameOptions.bgWidth + gameOptions.bgWidth * .5 - 10  , this.config.height * .5);
+		}
 	}
 
 	getHighScoreFromStorage() {
@@ -293,6 +307,10 @@ export default class Game extends Phaser.Scene {
 		this.coinGroup.getChildren().forEach(function (coin) {
 			coin.setVelocityX(gameOptions.platformStartSpeed * -1);
 		});
+
+		// start moving the backgrounds
+		this.bg1.setVelocityX(gameOptions.platformStartSpeed * -1 * gameOptions.backgroundSpeedReducer);
+		this.bg2.setVelocityX(gameOptions.platformStartSpeed * -1 * gameOptions.backgroundSpeedReducer);
 
 		// play the campy walking animation
 		this.player.anims.play('walk', true);
