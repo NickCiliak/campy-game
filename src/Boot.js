@@ -5,7 +5,7 @@ import Game from './scenes/Game';
 const config = {
 	type: Phaser.AUTO,
 	width: 640,
-	// backgroundColor: 0x356ae6,
+	backgroundColor: 0x1F2129,
 	height: 1280,
 	scene: [Game],
 	physics: {
@@ -13,10 +13,9 @@ const config = {
 	},
 	scale: {
 		mode: Phaser.Scale.FIT,
-		parent: 'body',
 		autoCenter: Phaser.Scale.CENTER_BOTH,
-		// width: 320,
-		// height: 640
+		width: 640,
+		height: 1280
 	},
 };
 

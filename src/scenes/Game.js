@@ -6,7 +6,7 @@
  * - music?
  * - title screen & score graphics
  * - bug where platform not smoothly entering from right //
- * - make background scroll
+ * - make background scroll //
  * - iphone height is too tall, causes scrollbar
  * - 3 CXA coins for power up mode
  */
