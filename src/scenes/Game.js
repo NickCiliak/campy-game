@@ -5,25 +5,28 @@
  * - make more difficult as time goes on
  * - 3 CXA coins for power up mode
  * - title screen
+ * - iphone height is too tall, causes scrollbar
+ * - make background scroll
  */
 
 import Phaser from 'phaser';
 
 import bgSprite from '../../assets/bg2.png';
-import groundSprite from '../../assets/ground.png';
-import campySprite from '../../assets/CampyWalkSmall.png';
+import campySprite from '../../assets/CampyWalk3.png';
 import coinSprite from '../../assets/coin.png';
 import p1Sprite from '../../assets/p1.png';
 import p2Sprite from '../../assets/p2.png';
 import p3Sprite from '../../assets/p3.png';
+import coinSound from '../../assets/coin.mp3';
+import jumpSound from '../../assets/jump.mp3';
 
 let gameOptions = {
-	playerStartPosition: 100,
-	playerStartHeight: 300,
-	platformStartHeight: 360,
+	playerStartPosition: 200,
+	playerStartHeight: 600,
+	platformStartHeight: 720,
 	playerGravity: 900,
 	platformStartSpeed: 200,
-	spawnRange: [75, 200],
+	spawnRange: [50, 100],
 	// platformSizeRange: [100, 250],
 	platformHeightRange: [-50, 50],
 	jumpForce: 400,
@@ -39,68 +42,52 @@ export default class Game extends Phaser.Scene {
 	}
 
 	preload() {
-		this.load.image('ground', groundSprite);
 		this.load.image('bg', bgSprite);
 		this.load.image('p1', p1Sprite);
 		this.load.image('p2', p2Sprite);
 		this.load.image('p3', p3Sprite);
+		this.load.audio('coin', coinSound);
+		this.load.audio('jump', jumpSound);
 		this.load.spritesheet('coin', coinSprite, { frameWidth: 144, frameHeight: 144 });
 		// this.load.spritesheet('campy', campySprite, { frameWidth: 175, frameHeight: 240 });
-		this.load.spritesheet('campy', campySprite, { frameWidth: 84, frameHeight: 105 });
+		this.load.spritesheet('campy', campySprite, { frameWidth: 182, frameHeight: 236 });
 	}
 
 	create() {
 		// alias the config
-		this.config = this.sys.game.config;
+        this.config = this.sys.game.config;
+
+        // setup sounds
+        this.coinSound = this.sound.add('coin');
+        this.jumpSound = this.sound.add('jump');
 
 		// this.bg = this.add.image(this.config.width * 0.5, this.config.height * 0.5, 'bg');
-		this.physics.add.sprite(0, this.config.height * .5, 'bg');
-		// this.bg.setDisplaySize(320, 640);
+		this.bg = this.physics.add.sprite(0, this.config.height * .5, 'bg');
+		this.bg.setDisplaySize(1810, 1280);
 		// this.bg.setScale(.9);
 		// this.bg.setRotation(3.14159);
 
-		this.bgGroup = this.add.group();
+		// this.bgGroup = this.add.group();
 
 		this.score = 0;
-		this.scoreText = this.add.text(16, 16, '0', { fontSize: '32px', fill: '#FFF', fontFamily: 'Poppins' });
+		this.scoreText = this.add.text(16, 16, '0', { fontSize: '64px', fill: '#FFF', fontFamily: 'Poppins' });
 
 		// create platform group
-		this.platformGroup = this.add.group({
-			removeCallback: function (platform) {
-				platform.scene.platformPool.add(platform)
-			}
-		});
-
-		// create platform pool
-		this.platformPool = this.add.group({
-			removeCallback: function (platform) {
-				platform.scene.platformGroup.add(platform)
-			}
-		})
+		this.platformGroup = this.add.group();
 
 		// create coins group
-		this.coinGroup = this.add.group({
-			removeCallback: function (coin) {
-				coin.scene.coinPool.add(coin)
-			}
-		});
-
-		// create coins pool
-		this.coinPool = this.add.group({
-			removeCallback: function (coin) {
-				coin.scene.coinGroup.add(coin)
-			}
-		});
+		this.coinGroup = this.add.group();
 
 		// add a platform
 		this.addPlatform(3, this.config.width / 2, gameOptions.platformStartHeight);
 
 		// add a player
 		this.playerJumps = 0;
-		this.player = this.physics.add.sprite(this.config.width * .5, gameOptions.playerStartHeight, 'campy');
+        this.player = this.physics.add.sprite(this.config.width * .5, gameOptions.playerStartHeight, 'campy');
+        this.player.setFrame(2);
 
 		this.player.setGravityY(gameOptions.playerGravity);
-		this.player.setDisplaySize(42, 58); // 504 w
+		this.player.setDisplaySize(84, 116); // 504 w
 		// this.player.displayWidth = 42;
 		// this.player.displayHeight = 58;
 
@@ -201,29 +188,15 @@ export default class Game extends Phaser.Scene {
 		if (platformWidth === 3) {
 			sprite = 'p3';
 		}
-		let platform;
 
-		/**
-		 * commenting out the object pooling for now
-		 */
-
-		// if (this.platformPool.getLength()) {
-		// 	platform = this.platformPool.getFirst();
-		// 	platform.x = posX;
-
-		// 	platform.active = true;
-		// 	platform.visible = true;
-		// 	this.platformPool.remove(platform);
-		// }
-		// else {
-		platform = this.physics.add.sprite(posX, posY, sprite);
+		let platform = this.physics.add.sprite(posX, posY, sprite);
 		platform.setImmovable(true);
 
 		if (this.gameHasStarted) {
 			platform.setVelocityX(gameOptions.platformStartSpeed * -1);
 		}
+
 		this.platformGroup.add(platform);
-		// }
 		platform.setScale(.5);
 		// platform.displayWidth = 350;
 		this.nextPlatformDistance = Phaser.Math.Between(gameOptions.spawnRange[0], gameOptions.spawnRange[1]);
@@ -231,47 +204,46 @@ export default class Game extends Phaser.Scene {
 
 		// don't add a coin on the first platform
 		if (this.platformGroup.getLength() > 1 && (Phaser.Math.Between(0, 1) * gameOptions.coinChance > 0)) {
-			this.addCoin(posX, posY - 40);
+			this.addCoin(posX, posY - 60);
 		}
 	}
 
 	addCoin(posX, posY) {
-		let coin;
-		// if (this.coinPool.getLength()) {
-		// 	console.log('ya');
-		// 	coin = this.coinPool.getFirst();
-		// 	coin.x = posX;
-		// 	coin.y = posY;
-		// 	coin.active = true;
-		// 	coin.visible = true;
-		// 	this.coinPool.remove(coin);
-		// }
-		// else {
-		coin = this.physics.add.sprite(posX, posY, 'coin');
-		coin.setDisplaySize(20, 20, true);
-		coin.anims.play('coin');
-		// coin.setImmovable(true);
-		coin.setVelocityX(gameOptions.platformStartSpeed * -1);
+		let coin = this.physics.add.sprite(posX, posY, 'coin');
+		coin.setDisplaySize(36, 36, true);
+        coin.anims.play('coin');
+
+		if (this.gameHasStarted) {
+			coin.setVelocityX(gameOptions.platformStartSpeed * -1);
+		}
+
 		this.coinGroup.add(coin);
-		// }
 	}
 
 	collectCoin(player, coin) {
-		coin.disableBody(true, true);
+        coin.disableBody(true, true);
+        this.coinSound.play();
 		this.score += 10;
 		this.scoreText.setText(this.score);
 	}
 
 	startGame() {
 		this.gameHasStarted = true;
+
+		// start moving the existing platforms
 		this.platformGroup.getChildren().forEach(function(platform) {
 			platform.setVelocityX(gameOptions.platformStartSpeed * -1);
 		});
 
+		// start moving the existing coins
+		this.coinGroup.getChildren().forEach(function(coin) {
+			coin.setVelocityX(gameOptions.platformStartSpeed * -1);
+		});
+
+		// play the campy walking animation
 		this.player.anims.play('walk', true);
 	}
 
-	// the player jumps when on the ground, or once in the air as long as there are jumps left and the first jump was on the ground
 	jump() {
 		if (!this.gameHasStarted) {
 			this.startGame();
@@ -283,7 +255,8 @@ export default class Game extends Phaser.Scene {
 				this.playerJumps = 0;
 			}
 			this.player.setVelocityY(gameOptions.jumpForce * -1);
-			this.player.anims.play('jump', true);
+            this.player.anims.play('jump', true);
+            this.jumpSound.play();
 			this.playerJumps++;
 		}
 	}
